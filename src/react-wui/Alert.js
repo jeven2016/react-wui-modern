@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {execute, isNil} from './Utils';
 import clsx from 'clsx';
 import {IconError, IconInfo, IconOk, IconWarning} from './Icons';
-/*
+
 const AlertType = {
   simple: {clsName: 'alert-simple', icon: null},
   info: {clsName: 'alert-info', icon: <IconInfo/>},
@@ -10,16 +10,6 @@ const AlertType = {
   ok: {clsName: 'alert-ok', icon: <IconOk/>},
   warning: {clsName: 'alert-warning', icon: <IconWarning/>},
   error: {clsName: 'alert-error', icon: <IconError/>},
-};*/
-
-
-const AlertType = {
-  simple: {clsName: 'alert-simple', icon: null},
-  info: {clsName: 'alert-info', icon: null},
-  mini: {clsName: 'alert-mini', icon: null},
-  ok: {clsName: 'alert-ok', icon: null},
-  warning: {clsName: 'alert-warning', icon: null},
-  error: {clsName: 'alert-error', icon: null},
 };
 
 const Alert = React.forwardRef((props, ref) => {

@@ -3,19 +3,17 @@ import clsx from 'clsx';
 
 export default class Accordion {
 
-/*  static defaultProps = {
+  static defaultProps = {
     className: 'accordion',
-  };*/
-/*
-  static propTypes = {};*/
+  };
+  static propTypes = {};
 
   constructor(args) {
     this.state = {};
   }
 
   render() {
-    return null;
- /*   const {className, block, children, , ...otherProps} = this.props;
+    const {className, block, children,  ...otherProps} = this.props;
     let clsName = clsx(className, {
       block,
     });
@@ -24,7 +22,6 @@ export default class Accordion {
         {children}
       </div>
     </>;
-*/
   }
 
 }

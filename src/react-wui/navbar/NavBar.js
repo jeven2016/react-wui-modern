@@ -12,7 +12,6 @@ const NavBar = React.forwardRef((props, ref) => {
     className = 'navbar',
     fixed,
     extraClassName,
-    hasBox,
     expand,
     ...otherProps
   } = props;
@@ -35,7 +34,6 @@ const NavBar = React.forwardRef((props, ref) => {
     [type]: type,
     [fixedType]: fixedType,
     expand: isNil(expandList) ? expand : expandList,
-    'global-with-box': hasBox,
   });
 
   return (
