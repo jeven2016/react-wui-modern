@@ -1,6 +1,6 @@
 {
   "name": "react-wui-modern",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "A modern web UI framework based on React",
   "repository": {
     "type": "git",
@@ -64,9 +64,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "NODE_ENV=production ./node_modules/.bin/babel src/react-wui  --out-dir dist",
-    "sync": "copy-and-watch dist/react-wui/**/*.{js,json} /root/Desktop/workspace/projects/my/react-wui-modern-docs/node_modules/react-wui-modern/dist/",
-    "start": "(npm run build) & npm run sync"
+    "build": "NODE_ENV=production ./node_modules/.bin/babel src/react-wui  --out-dir dist"
   },
   "babel": {
     "presets": [

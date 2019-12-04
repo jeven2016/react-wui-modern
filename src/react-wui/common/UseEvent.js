@@ -5,7 +5,10 @@ import {isFunction} from '../Utils';
 
 //refer to https://overreacted.io/making-setinterval-declarative-with-react-hooks/
 //using window instead of document to stop propagation
-const useEvent = (name, handler, listenable = true, elem = window) => {
+const useEvent = (name,
+                  handler,
+                  listenable = true,
+                  elem = window) => {
   //a mutable callback variable pointing to the latest interval callback
   //instead of recreating one all the time
   const handlerRef = useRef(null);
@@ -35,14 +38,14 @@ const useEvent = (name, handler, listenable = true, elem = window) => {
     if (!isSupportedBrowser) {
       return;
     }
-    console.log('add a event listener');
+    console.log('add a event listener: ' + name);
     const listener = event => handlerRef.current(event);
     elem.addEventListener(name, listener);
     return () => {
-      console.log('remove a event listener');
+      console.log('remove a event listener: ' + name);
       elem.removeEventListener(name, listener);
     };
-  }, [name, handler]);
+  }, [name, elem]);
 };
 
 export default useEvent;

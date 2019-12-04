@@ -15,3 +15,7 @@
 * Table需要提供响应式监控，当屏幕变小后，自动隐藏多余的列，或进行滚动
 * Dropdown嵌入ButtonGroup后多余的div导致垂直不对齐
 * tooltip不需要其他显示特效，只有scale效果最佳
+
+
+//    "sync": "copy-and-watch dist/react-wui/**/*.{js,json} /home/jujucome/Desktop/workspace/projects/zjtech/react-wui-modern-docs/node_modules/react-wui-modern/dist/",
+//    "start": "(npm run build) & npm run sync"
