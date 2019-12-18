@@ -38,11 +38,11 @@ const useEvent = (name,
     if (!isSupportedBrowser) {
       return;
     }
-    console.log('add a event listener: ' + name);
+    // console.log('add a event listener: ' + name);
     const listener = event => handlerRef.current(event);
     elem.addEventListener(name, listener);
     return () => {
-      console.log('remove a event listener: ' + name);
+      // console.log('remove a event listener: ' + name);
       elem.removeEventListener(name, listener);
     };
   }, [name, elem]);

@@ -8,3 +8,9 @@
 #### 0.1.13
 * Revert acouple of missing components
 * Correct importing of isNil function
+#### 0.1.15
+* enhance progress component
+* add new component RouteLoader 
+* fix some issues of PopupController
+#### 0.1.16
+* enhance the RouteLoader

@@ -52,7 +52,6 @@ const Notification = (props) => {
   if (!msgStore.initialized()) {
     msgStore.attach({add: addMsg});
   }
-  console.log(position);
   useEvent(EventListener.resize, (evt) => {
     move();
   }, position === 'topCenter');
@@ -72,7 +71,6 @@ const Notification = (props) => {
   }, [position]);
 
   const move = () => {
-    console.log('move......');
     let cnt = cntRef.current;
     if (!cnt) {
       return;

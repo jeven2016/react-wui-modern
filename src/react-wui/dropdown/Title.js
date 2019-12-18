@@ -1,6 +1,5 @@
 import React from 'react';
 import useElement from '../common/useElement';
-import useMultipleRefs from '../common/UseMultipleRefs';
 
 const DisabledStyle = {
   cursor: 'not-allowed',
@@ -14,10 +13,7 @@ const EnabledStyle = {
 
 const Title = React.forwardRef((props, ref) => {
   const {directRef, ...otherProps} = props;
-  // const multipleRef = useMultipleRefs(ref, directRef);
-  const multipleRef = ref;
-  return useElement({...otherProps},
-      multipleRef, 'dropdown-title', null,
+  return useElement({...otherProps}, ref, 'dropdown-title', null,
       props.disabled ? DisabledStyle : EnabledStyle);
 });
 

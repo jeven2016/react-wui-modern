@@ -244,6 +244,11 @@ export const validate = (condition, message) => {
   }
 };
 
+export const getContainer = (id) => {
+  let root = document.querySelector(`#${id}`);
+  return root;
+};
+
 export const createContainer = (id) => {
   if (isNil(id)) {
     id = `wui-container-${random(100, 10000)}`;

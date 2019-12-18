@@ -46,10 +46,6 @@ const Modal = React.forwardRef((props, ref) => {
     }
     body.style.overflow = 'hidden';
     body.style.paddingRight = '17px'; //避免滚动条造成的页面抖动
-
-    return () => {
-      console.log('I going......');
-    };
   }, [active]);
 
   const clsName = clsx(className,

@@ -7,12 +7,13 @@ import React, {
 } from 'react';
 import {isBlank, isNil} from '../Utils';
 import Menu from '../menu';
-import {Badge, Dropdown, preventEvent, Row} from '../index';
+import {Badge, Dropdown, Row} from '../index';
 import Input from '../Input';
 import {IconArrowDown, IconArrowUp, IconChecked2, IconNoData} from '../Icons';
 import Element from '../common/Element';
 import Col from '../grid/Col';
-import {reducer, ActionType} from './SelectReducer';
+import {ActionType, reducer} from './SelectReducer';
+import {DropdownTriggerType} from '../common/Constants';
 
 const Select = React.forwardRef((props, ref) => {
   const {
@@ -30,16 +31,21 @@ const Select = React.forwardRef((props, ref) => {
     searchDelay,
     noDataText = 'No Data',
     onChange,
+    handleSearch,//a callback to decide what items will display
     onSearch,
     onOpen,
     onClose,
     children,
+    popupStyle,
+    active,
+    onActiveChange,
     ...otherProps
   } = props;
   const inputRef = ref ? ref : useRef(null);
   const menuRef = useRef(null);
   const detectRef = useRef(null);
   const multipleSelectRef = useRef(null);
+  const popupRef = useRef();
 
   const [state, dispatch] = useReducer(reducer, {
     showFilteredItems: false,
@@ -48,6 +54,7 @@ const Select = React.forwardRef((props, ref) => {
     selectedItems: [],
   });
 
+  let width = 0;
   useEffect(() => {
     if (!autoWidth || disabled) {
       return;
@@ -60,18 +67,24 @@ const Select = React.forwardRef((props, ref) => {
     }
 
     //adjust the menu's width
-    const menuDomNode = menuRef.current;
-    if (menuDomNode) {
-      let rect;
-      if (multiple) {
-        rect = multipleSelectRef.current.getBoundingClientRect();
-      } else {
-        rect = inputDomNode.getBoundingClientRect();
-      }
-      const width = rect.width;
-      menuRef.current.parentNode.style.width = `${width}px`;
+    let rect;
+    if (multiple) {
+      rect = multipleSelectRef.current.getBoundingClientRect();
+    } else {
+      console.log('inputDomNode=', inputDomNode);
+      rect = inputDomNode.getBoundingClientRect();
     }
-  });
+    width = rect.width;
+    if (width <= 0) {
+      return;
+    }
+    if (menuRef.current) {
+      const parentNode = menuRef.current.parentNode;
+      if (parentNode) {
+        parentNode.style.width = `${width}px`;
+      }
+    }
+  }, [disabled, autoWidth, multiple]);
 
   const handleItemClick = (item, e) => {
     const data = {
@@ -79,7 +92,7 @@ const Select = React.forwardRef((props, ref) => {
       multiple: multiple,
       clickItem: item,
       callback: () => {
-        onChange(item);
+        onChange(item, e);
       },
     };
 
@@ -90,7 +103,7 @@ const Select = React.forwardRef((props, ref) => {
         data: {
           ...data,
           callback: (items) => {
-            onChange(items);
+            onChange(items, e);
           },
         },
       });
@@ -136,9 +149,11 @@ const Select = React.forwardRef((props, ref) => {
       return state.selectedItems.map(item => item.value);
     }
 
-    return state.selectedItems.length === 0
-        ? [defaultValue]
-        : state.selectedItems.map(item => item.value);
+    if (state.selectedItems.length === 0) {
+      return isNil(defaultValue) ? [] : [defaultValue];
+    } else {
+      return state.selectedItems.map(item => item.value);
+    }
   };
 
   const displayedItems = getSelectedMenuItem().map((val, index) => {
@@ -153,8 +168,7 @@ const Select = React.forwardRef((props, ref) => {
     if (multiple && isBlank(state.searchedValue)) {
       return '';
     }
-
-    if (!isBlank(state.searchedValue)) {
+    if (!isNil(state.searchedValue)) {
       return state.searchedValue;
     }
 
@@ -168,37 +182,61 @@ const Select = React.forwardRef((props, ref) => {
   const inputStyle = searchable ? null : {cursor: 'pointer', ...style};
 
   const handleOpen = () => {
-    dispatch({type: ActionType.open, data: {callback: onOpen}});
+    // dispatch({type: ActionType.open, data: {callback: onOpen}});
   };
   const handleClose = () => {
-    dispatch({type: ActionType.close, data: {callback: onClose}});
+    // dispatch({type: ActionType.close, data: {callback: onClose}});
   };
 
+  const clear = useCallback(() => {
+    if (!isNil(state.searchedValue) && finalItems.length === 0) {
+      //no valid value is selected, remove current invalid value
+      dispatch({type: ActionType.close, data: {callback: onClose}});
+    }
+  }, [state.searchedValue, finalItems]);
+
   const handleMouseLeave = (e) => {
-    console.log('mouse leave');
+    console.log('input leave');
+    clear();
   };
 
   const handleBlur = (e) => {
-    console.log('blur');
+    clear();
   };
 
   const searchText = (e) => {
     dispatch({
       type: ActionType.search, data: {
         searchedValue: e.target.value, selectedItem: null,
+        callback: onSearch,
       },
     });
   };
 
+  const contains = (value, comparedValue) => {
+    if (isNil(value) || isNil(comparedValue)) {
+      return false;
+    }
+    return comparedValue.toLowerCase().includes(value.toLowerCase());
+  };
+
   const filterItems = useCallback(() => {
-    const newChild = children.filter((chd) => !isNil(chd.props.value) &&
-        chd.props.value.includes(state.searchedValue));
+    //if onSearch is defined, call this function and return the children processed by this callback
+    if (handleSearch) {
+      return handleSearch(state.searchedValue, children);
+    }
+    const newChild = children.filter(
+        (chd) => {
+          const childInfo = findItemInfoByValue(chd.props.value);
+          return contains(state.searchedValue,
+              isNil(childInfo.text) ? childInfo.children : childInfo.text);
+        });
 
     if (newChild.length === 0) {
       return [];
     }
     return newChild;
-  }, [state.searchedValue, children]);
+  }, [state.searchedValue, children, onSearch]);
 
   const convertToMultipleItem = (chdren) => {
     if (!multiple) {
@@ -253,17 +291,12 @@ const Select = React.forwardRef((props, ref) => {
              {...otherProps}
              value={displayText || ''}
              onChange={searchText}
-             onMouseLeave={handleMouseLeave}
-             onBlur={handleBlur}
              disabled={disabled}/>
     </>;
     if (multiple) {
       return <Element nativeType="span" ref={multipleSelectRef}
-                      className={multiple ? 'select-multiple' : null}
-                      onClick={() => {inputRef.current.focus();}}
-                      onFocus={() => {inputRef.current.focus();}}>
+                      className={multiple ? 'select-multiple' : null}>
         <span className="select-multiple-content">
-
         {
           displayedItems
         }
@@ -275,7 +308,8 @@ const Select = React.forwardRef((props, ref) => {
         </span>
       </Element>;
     }
-    return <Input.IconInput disabled={disabled} block={block} size={size}>
+    return <Input.IconInput inputRef={inputRef} disabled={disabled}
+                            block={block} size={size}>
       {input}
       {state.activeIcon ? <IconArrowUp/> : <IconArrowDown/>}
     </Input.IconInput>;
@@ -285,15 +319,24 @@ const Select = React.forwardRef((props, ref) => {
   const menuBodyCls = hasBorder ? suffix + ' global-with-border' : suffix;
 
   return <Dropdown disabled={disabled}
+                   ref={popupRef}
+                   active={active}
+                   onActiveChange={onActiveChange}
                    selectable={true}
                    triggerBy={triggerBy}
                    margin={5}
                    onOpen={handleOpen}
-                   onDropdownAutoClose={canClickClose} //don't auto close the list while no data filtered
+                   onDropdownAutoClose={canClickClose} //don't automately close the list while no data filtered
                    onClose={handleClose}
                    bodyClassName={menuBodyCls}
+                   popupStyle={popupStyle}
+                   ownerRef={inputRef}
                    onSelect={handleItemClick}>
-    <Dropdown.Title>
+    {
+      //todo
+    }
+    <Dropdown.Title block={block} onClick={() => {inputRef.current.focus();}}
+                    style={{tabIndex: '0'}}>
       {getInput()}
     </Dropdown.Title>
     {

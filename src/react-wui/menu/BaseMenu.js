@@ -52,14 +52,20 @@ export const useMenuList = (
 
 export const useActiveItems = (
     defaultActiveItems,
+    activeItems,
     onSelect,
     multiSelect,
     onClickItem,
     autoSelectItem,
     selectable) => {
 
+  //todo: default active只会一次生效，后续选中的item无法显示激活状态,activeItems问题
+  //todo: add activeItems prop, 一旦此prop设定后，内部不在自行维护activeItems 状态
+
+  const isControlledByOutside = !isNil(activeItems);
+
   //if no id is assigned , the value field would be used as identifier
-  const [activeItems, setActiveItems] = useState(defaultActiveItems);
+  const [autoActiveItems, setActiveItems] = useState(defaultActiveItems);
 
   // handle item
   const handleItem = (itemInfo, evt) => {
@@ -68,6 +74,10 @@ export const useActiveItems = (
     let callback = onClickItem;
     if (!isNil(callback)) {
       autoActiveItem = callback(itemInfo, evt);
+    }
+    //do nothing if the activeItems is passed from outside
+    if (isControlledByOutside) {
+      return;
     }
 
     if (!selectable || !autoSelectItem) {
@@ -78,13 +88,13 @@ export const useActiveItems = (
       let selectItems = [];
       //multiSelect
       if (multiSelect) {
-        if (activeItems.includes(itemId)) {
+        if (autoActiveItems.includes(itemId)) {
           //deselect this item
-          selectItems = activeItems.filter(
+          selectItems = autoActiveItems.filter(
               existingItem => itemId !== existingItem);
         } else {
           //select this item
-          selectItems = activeItems.concat(itemId);
+          selectItems = autoActiveItems.concat(itemId);
         }
       } else {
         //for single selection
@@ -92,7 +102,6 @@ export const useActiveItems = (
       }
       setActiveItems(items => selectItems);
 
-      console.log(selectItems);
       //callback
       onSelect && onSelect(selectItems);
     }
@@ -100,7 +109,7 @@ export const useActiveItems = (
   };
 
   return {
-    activeItems,
+    autoActiveItems: isControlledByOutside ? activeItems : autoActiveItems,
     handleItem,
   };
 };

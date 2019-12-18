@@ -40,6 +40,7 @@ const reducer = (state, action) => {
 
     case ActionType.search:
       const searchData = action.data;
+      invoke(action.data.callback, searchData.searchedValue);
       return {
         ...state,
         searchedValue: searchData.searchedValue,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useImperativeHandle, useRef} from 'react';
 import clsx from 'clsx';
 import PropTypes from 'prop-types';
 import {InputBorderType} from './common/Constants';
@@ -7,6 +7,7 @@ import Element from './common/Element';
 const IconInput = React.forwardRef((props, ref) => {
   const {
     borderType, children, leftIcon, className = 'icon-input',
+    inputRef,
     extraClassName,
     size = 'medium', block, ...otherProps
   } = props;
@@ -18,8 +19,18 @@ const IconInput = React.forwardRef((props, ref) => {
     [borderTypeCls]: borderTypeCls,
   });
 
+  let newChildren = children;
+  if (inputRef) {
+    newChildren = React.Children.map(children, chd => {
+      if (chd.type === Input) {
+        return React.cloneElement(chd, {ref: inputRef});
+      }
+      return chd;
+    });
+  }
+
   return <span className={clsName} {...otherProps} ref={ref}>
-    {children}
+    {newChildren}
   </span>;
 });
 

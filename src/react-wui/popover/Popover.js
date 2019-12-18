@@ -50,7 +50,7 @@ const Popover = React.forwardRef((props, ref) => {
       position={position}
       handleChildren={updateChildren}
       setChildDisabled={false}
-      margin={5}
+      // margin={5}
       {...otherProps}>
     {children}
   </PopupController>;

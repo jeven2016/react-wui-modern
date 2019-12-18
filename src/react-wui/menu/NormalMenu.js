@@ -52,7 +52,7 @@ export const BaseMenu = React.forwardRef((props, ref) => {
     disabled: disabled,
   });
 
-  return <ul className={clsName} ref={ref} {...otherProps}>
+  return <ul ref={ref} className={clsName} ref={ref} {...otherProps}>
     {children}
   </ul>;
 });
@@ -70,6 +70,7 @@ const NormalMenu = React.forwardRef(((props, ref) => {
     paddingLeftUnit,
     paddingLeftIncrement,
     defaultActiveItems,
+    activeItems,
     defaultOpenedMenus,
     onClickHeader,
     onSelect,
@@ -82,7 +83,6 @@ const NormalMenu = React.forwardRef(((props, ref) => {
     ...otherProps
   } = props;
   const menuRef = !isNil(ref) ? ref : useRef(null);
-
   //set padding-left property to items, only execute once
   useEffect(() => {
     if (!multiLevelMenus && setItemPaddingLeft) {
@@ -101,7 +101,8 @@ const NormalMenu = React.forwardRef(((props, ref) => {
   const {isShow, handleHeader} = useMenuList(id, defaultOpenedMenus, disabled,
       onClickHeader);
 
-  const {activeItems, handleItem} = useActiveItems(defaultActiveItems,
+  const {autoActiveItems, handleItem} = useActiveItems(defaultActiveItems,
+      activeItems,
       onSelect,
       multiSelect,
       onClickItem,
@@ -120,7 +121,7 @@ const NormalMenu = React.forwardRef(((props, ref) => {
         disabled: disabled,
         clickHeader: handleHeader,
         clickItem: handleItem,
-        activeItems: activeItems,
+        activeItems: autoActiveItems,
         menuDisabled: disabled,
         defaultOpenedMenus: defaultOpenedMenus,
         menuType: props.type,
@@ -131,6 +132,7 @@ const NormalMenu = React.forwardRef(((props, ref) => {
         hasBackground: hasBackground,
       }}>
     <BaseMenu className={clsName}
+              ref={ref}
               hasBox={hasBox}
               hasBorder={hasBorder}
               hasBackground={hasBackground}
@@ -155,7 +157,9 @@ NormalMenu.defaultProps = {
   paddingLeftUnit: 'rem',
   paddingLeftIncrement: 1,
   defaultActiveItems: [],
+  activeItems: null, //when activeItems set, the onClickItem callback will be invoked and the onSelect won't be invoked any more
   defaultOpenedMenus: [],
+  onSelect: null,
   multiLevelMenus: false,
   menuDirection: MenuDirection.vertical,
 };

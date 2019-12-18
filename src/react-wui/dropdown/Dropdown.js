@@ -5,6 +5,7 @@ import {isNil} from '../Utils';
 import Button from '../button';
 import PopupController from '../common/PopupController';
 import Element from '../common/Element';
+import {preventEvent} from '../event';
 
 const Dropdown = React.forwardRef((props, ref) => {
   const dpRef = ref ? ref : useRef(null);
@@ -12,18 +13,17 @@ const Dropdown = React.forwardRef((props, ref) => {
     disabled = false,
     selectable = false,
     type,
-    margin = 0,
     onSelect,
+    ownerRef, //the owner of controller component that listens on a series of events(focus,blur,mouseEnter, mouseLeave, etc.)
     active,
-    autoClose = true,
     onDropdownAutoClose, //override the dropdown's auto close handler
     bodyClassName = 'dropdown-menu',
     ...otherProps
   } = props;
 
-  const handleSelect = useCallback((itemInfo, evt) => {
+  const handleSelect = useCallback((itemInfo, e) => {
     if (!isNil(onSelect)) {
-      onSelect(itemInfo, evt);
+      onSelect(itemInfo, e);
     }
   }, [onSelect]);
 
@@ -56,7 +56,7 @@ const Dropdown = React.forwardRef((props, ref) => {
   }, [disabled, handleSelect, selectable]);
 
   const updateChildren = useCallback((chd) => {
-    const childObj = {bodyClassName: bodyClassName};
+    const childObj = {bodyClassName: bodyClassName, ownerRef: ownerRef};
     React.Children.forEach(chd, (child) => {
       let childType = child.type;
 
@@ -82,10 +82,8 @@ const Dropdown = React.forwardRef((props, ref) => {
   }, [props.children, disabled]);
 
   return <PopupController
+      active={active}
       ref={dpRef}
-      defaultActive={active}
-      autoClose={autoClose}
-      margin={margin}
       onAutoClose={handleAutoClose}
       disabled={disabled}
       handleChildren={updateChildren}

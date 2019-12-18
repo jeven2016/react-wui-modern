@@ -29,9 +29,10 @@ const Tooltip = React.forwardRef((props, ref) => {
     return {body: popupBody, ctrl: children};
   };
   return <PopupController
-      ref={ref}
-      margin={5}
+      controllerRef={ref}
+      bodyOffset="0.6rem"
       position={position}
+      defaultTransformOrigin="center center"
       triggerBy={triggerBy}
       setChildDisabled={false}
       handleChildren={updateChildren}

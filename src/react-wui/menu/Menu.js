@@ -25,6 +25,7 @@ const Menu = React.forwardRef((props, ref) => {
   }
 
   return <NormalMenu multiLevelMenus={multiLevelMenus}
+                     ref={ref}
                      defaultOpenedMenus={newDefaultOpenedMenus}
                      children={newChildren} {...otherProps}/>;
 });

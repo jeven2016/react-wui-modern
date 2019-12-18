@@ -41,6 +41,9 @@ export {default as Breadcrumb} from './Breadcrumb';
 export {default as Select} from './select';
 export {default as Progress} from './progress';
 export {default as Layout} from './layout';
+export {default as RouteLoader} from './RouteLoader';
+export {default as useEvent} from './common/UseEvent'
+
 export {
   IconInfo,
   IconWarning,
