@@ -45,33 +45,43 @@ export const RadioGroupContext = React.createContext({});
  */
 export const placePadding = (
     destComponent, ctrl, type, padding = '0px', margin = 0) => {
-  switch (type) {
-    case 'bottom':
-    case 'bottomLeft':
-    case 'bottomRight':
-      destComponent.style.paddingTop = `${padding}`;
-      break;
-    case 'top':
-    case 'topLeft':
-    case 'topRight':
-      destComponent.style.paddingBottom = `${padding}`;
-      break;
-    case 'left':
-    case 'leftTop':
-    case 'leftBottom':
-      destComponent.style.paddingRight = `${padding}`;
-      break;
-    case 'right':
-    case 'rightTop':
-    case 'rightBottom':
-      destComponent.style.paddingLeft = `${padding}`;
-      break;
-  }
   place(destComponent, ctrl, type, margin);
 };
 
 //todo: transform : left , right not working
 export const setTransformOrigin = (destComponent, type) => {
+  const origin = getTransformOrigin(type);
+  destComponent.style.transformOrigin = origin;
+};
+
+export const getPaddingAttribute = (type) => {
+  let paddingAttr = null;
+  switch (type) {
+    case 'bottom':
+    case 'bottomLeft':
+    case 'bottomRight':
+      paddingAttr = 'paddingTop';
+      break;
+    case 'top':
+    case 'topLeft':
+    case 'topRight':
+      paddingAttr = 'paddingBottom';
+      break;
+    case 'left':
+    case 'leftTop':
+    case 'leftBottom':
+      paddingAttr = 'paddingRight';
+      break;
+    case 'right':
+    case 'rightTop':
+    case 'rightBottom':
+      paddingAttr = 'paddingLeft';
+      break;
+  }
+  return paddingAttr;
+};
+
+export const getTransformOrigin = (type) => {
   let origin = 'center';
   switch (type) {
     case 'bottom':
@@ -103,8 +113,7 @@ export const setTransformOrigin = (destComponent, type) => {
       origin = 'left top';
       break;
   }
-
-  destComponent.style.transformOrigin = origin;
+  return origin;
 };
 
 /**
@@ -115,7 +124,6 @@ export const place = (dest, ctrl, type, offset = 0) => {
       || document.body.scrollTop;
   var scrollLeft = document.documentElement.scrollLeft || window.pageXOffset
       || document.body.scrollLeft;
-
   var pos = ctrl.getBoundingClientRect();
   if (type === 'bottom') {
     dest.style.left = scrollLeft + (pos.left
@@ -249,6 +257,11 @@ export const getContainer = (id) => {
   return root;
 };
 
+/**
+ * @Derepaced
+ * @param id
+ * @returns {{container: Element, id: string, remove: remove}}
+ */
 export const createContainer = (id) => {
   if (isNil(id)) {
     id = `wui-container-${random(100, 10000)}`;

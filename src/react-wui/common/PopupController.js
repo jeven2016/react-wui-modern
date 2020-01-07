@@ -1,19 +1,29 @@
 import React, {
   useCallback,
-  useImperativeHandle,
   useEffect,
+  useImperativeHandle,
+  useMemo,
   useRef,
   useState,
 } from 'react';
 import clsx from 'clsx';
-import {Active, EventListener, PopupCtrlType} from './Constants';
+import {Active, ContainerId, EventListener, PopupCtrlType} from './Constants';
 import useEvent from './UseEvent';
-import {execute, isNil, placePadding, setTransformOrigin} from '../Utils';
+import {
+  execute,
+  getPaddingAttribute,
+  getTransformOrigin,
+  isNil,
+  placePadding,
+} from '../Utils';
 import * as ReactDOM from 'react-dom';
-import {CSSTransition} from 'react-transition-group';
-import useContainer from './useContainer';
 import Button from '../button';
 import {preventEvent} from '../event';
+import {animated, useSpring} from 'react-spring';
+import {Transition} from 'react-spring/renderprops';
+import {usePopupAnimation} from '../animation/PopupControllerAnimation';
+import useContainer from './UseContainer';
+import useMount from './UseMount';
 
 const useCombinedListeners = (
     element, enterHandler, leaveHandler, dependencies) => {
@@ -30,6 +40,46 @@ const useCombinedListeners = (
       useCallback(leaveHandler, dependencies),
       true, element);
 };
+
+function useComponentEvents(
+    ownerRef, ctrlRef, triggerBy, handleClick, pcState, handleKeyDown,
+    handleHover, bodyRef, shouldRender) {
+  //add listeners for controller
+  const ctrlElem = useCallback(() => ownerRef && ownerRef.current ?
+      ownerRef.current : ctrlRef.current, [triggerBy]);
+  useEvent(EventListener.click,
+      useCallback(handleClick, [pcState, triggerBy]),
+      true, ctrlElem);
+  useEvent(EventListener.keyDown,
+      useCallback(handleKeyDown, [pcState, triggerBy]),
+      true, ctrlElem);
+  useEvent(EventListener.mouseEnter,
+      useCallback(
+          (e) => handleHover(e, Active.active, EventListener.mouseEnter),
+          [triggerBy, pcState]),
+      true, ctrlElem);
+  useEvent(EventListener.mouseLeave,
+      useCallback(
+          (e) => handleHover(e, Active.disactive, EventListener.mouseLeave),
+          [triggerBy, pcState]),
+      true, ctrlElem);
+  useEvent(EventListener.focus,
+      useCallback((e) => handleHover(e, Active.active, EventListener.focus),
+          [triggerBy, pcState]),
+      true, ctrlElem);
+  useEvent(EventListener.blur,
+      useCallback((e) => handleHover(e, Active.disactive, EventListener.blur),
+          [triggerBy, pcState]),
+      true, ctrlElem);
+
+  //add listeners for body
+  const bodyElem = useCallback(() => bodyRef.current,
+      [triggerBy, shouldRender]);
+  useCombinedListeners(bodyElem,
+      (e) => handleHover(e, Active.active, 'bodyMouseEnter'),
+      (e) => handleHover(e, Active.disactive, 'bodyMouseLeave'),
+      [triggerBy, shouldRender]);
+}
 
 /**
  * @ref  => reference to React Component instead of a real dom node
@@ -66,20 +116,45 @@ const PopupController = React.forwardRef((props, ref) => {
     popupStyle,
     ...otherProps
   } = props;
-  const rootElem = useContainer('wui-portals');
+  const rootElem = useContainer(ContainerId.popup);
   const ctrlRef = controllerRef ? controllerRef : useRef(null);
   const bodyRef = popupRef ? popupRef : useRef(null);
   const isControlledByOutside = !isNil(active);
 
+  //by default, the popup is hidden,
+  //so this variable is defined to stop playing the animation
+  const mountedRef = useMount();
+  const shouldRender = defaultActive ? true : mountedRef.current;
+
   //a flag
   const closingRef = useRef(false);
 
+  const getCurrentBoolValue = () => {
+    if (!isControlledByOutside) {
+      const interActive = pcState.activePopup;
+      return Active.isNa(interActive) ? defaultActive : Active.isActive(
+          interActive);
+    }
+    return Active.isNa(active)
+        ? defaultActive
+        : active;
+  };
+
+  const isCurrentActive = getCurrentBoolValue();
+
+  useEffect(() => {
+    mountedRef.current = true;
+  });
+
   const changeActive = (nextActive) => {
+    if (nextActive === pcState.activePopup) {
+      return;
+    }
     //active state changed by internal logic instead of the outside component
-    setPcState({
-      ...pcState,
+    setPcState(pre => ({
+      ...pre,
       activePopup: nextActive,
-    });
+    }));
 
     onActiveChange && onActiveChange(nextActive);
 
@@ -99,14 +174,12 @@ const PopupController = React.forwardRef((props, ref) => {
    */
   useImperativeHandle(ref, () => ({
     close: () => changeActive(Active.disactive),
-    show: () => changeActive(Active.active),
-    blur: (e) => handleHover(e, Active.disactive, EventListener.blur),
   }));
 
   //add listener for document click event
   useEvent(EventListener.click, (e) => {
 
-    if (disabled || !fireBackgroundClickEvent || !isActive()) {
+    if (disabled || !fireBackgroundClickEvent || !isCurrentActive) {
       return;
     }
     const isClickPopup = bodyRef.current.contains(e.target);
@@ -135,29 +208,12 @@ const PopupController = React.forwardRef((props, ref) => {
     move();
   }, true, window);
 
-  const getCurrentBoolValue = () => {
-    if (!isControlledByOutside) {
-      const interActive = pcState.activePopup;
-      return Active.isNa(interActive) ? defaultActive : Active.isActive(
-          interActive);
-    }
-    return Active.isNa(active)
-        ? defaultActive
-        : active;
-  };
-
-  const isActive = (value) => {
-    if (!isNil(value)) {
-      return Active.isActive(value);
-    }
-    return getCurrentBoolValue();
-  };
-
   const move = () => {
-    if (!disabled && isActive()) {
+    if (!disabled && isCurrentActive) {
       const contentDomNode = bodyRef.current;
-      if (isNil(defaultTransformOrigin)) {
-        setTransformOrigin(contentDomNode, position);
+      const ctrlDomNode = ctrlRef.current;
+      if (!contentDomNode || !ctrlDomNode) {
+        return;
       }
       placePadding(contentDomNode, ctrlRef.current, position, bodyOffset,
           margin);
@@ -172,6 +228,7 @@ const PopupController = React.forwardRef((props, ref) => {
     if (disabled || !isHover) {
       return;
     }
+
     //the hover event should only be fired by controller or popup
     //the menu items or popover-arrow cannot trigger closing the popup
     const isFiredByCtrlOrPoupBody = e && (bodyRef.current === e.target
@@ -179,14 +236,26 @@ const PopupController = React.forwardRef((props, ref) => {
 
     const isFiredByOwner = ownerRef ? ownerRef.current === e.target : false;
 
-    const isFiredByArrow = e && e.target.className &&
-        e.target.className.includes('popover-arrow');
+    //the className could be an instance of SVGAnimatedString, so it cannot
+    //directly retrieved by e.target.className
+    const isFiredByArrow = () => {
+      if (!e || !e.target) {
+        return false;
+      }
+      const realClass = e.target.getAttribute('class');
+      if (realClass && realClass.includes('popover-arrow')) {
+        return true;
+      }
+      return false;
+    };
 
-    if ((!isFiredByCtrlOrPoupBody && !isFiredByOwner) || isFiredByArrow) {
-      return;
+    if ((!isFiredByCtrlOrPoupBody && !isFiredByOwner) || isFiredByArrow()) {
+      if (!Active.isActive(nextActiveState)) {
+        return;
+
+      }
     }
 
-    console.log('state changed=', eventType, e.target);
     if (!isNil(eventType)) {
       switch (eventType) {
         case EventListener.blur:
@@ -203,15 +272,12 @@ const PopupController = React.forwardRef((props, ref) => {
           onMouseLeave && onMouseLeave(e);
       }
     }
-
     //to active
     if (Active.isActive(nextActiveState)) {
       if (closingRef.current) {
-
         closingRef.current = false;
       }
-
-      if (isActive()) {
+      if (isCurrentActive) {
         //if current state is active, ignore
         return;
       }
@@ -228,7 +294,7 @@ const PopupController = React.forwardRef((props, ref) => {
     if (!Active.isActive(nextActiveState)) {
       closingRef.current = true;
       execute(() => {
-        if (closingRef.current) { //todo: why its value is false??
+        if (closingRef.current) {
           closingRef.current = false;
           changeActive(nextActiveState);
         }
@@ -237,26 +303,46 @@ const PopupController = React.forwardRef((props, ref) => {
 
   };
 
+  const transformOrigin = useMemo(() => getTransformOrigin(position),
+      [position]);
+
+  const paddingAttr = useMemo(() => getPaddingAttribute(position));
+
+  const springDefinition = useCallback(
+      () => usePopupAnimation(isCurrentActive, {
+        transformOrigin: transformOrigin,
+        // onStart: move,
+        mountedRef: mountedRef,
+      }),
+      [
+        isCurrentActive,
+        transformOrigin,
+        bodyOffset,
+        position,
+        mountedRef.current]);
+  const springProps = useSpring(springDefinition());//todo, 第一次不显示popup
+
   const getPopupBody = (popupBody, bdClsName) => {
     if (disabled) {
       return null;
     }
+
     const cls = clsx(bdClsName, 'popup');
-    const popupBodyElem = <CSSTransition
-        in={isActive()} //why cannot directly set true here? no '-enter' class is appended, a workround is set appear to true
-        timeout={200}
-        appear={true}
-        classNames="popup">
-      <div className={cls} ref={bodyRef} style={popupStyle}>
-        {popupBody}
-      </div>
-    </CSSTransition>;
+    const originStyle = {[paddingAttr]: bodyOffset, ...popupStyle};
+    const animatedStyle = shouldRender
+        ? {...originStyle, ...springProps}
+        : originStyle;
+
+    const popupBodyElem = <animated.div className={cls} ref={bodyRef}
+                                        style={animatedStyle}>
+      {popupBody}
+    </animated.div>;
 
     return ReactDOM.createPortal(popupBodyElem, rootElem);
   };
 
   const handleClick = (e) => {
-    if (isHover || isActive()) {
+    if (isHover || isCurrentActive) {
       return;
     }
     if (isControlledByOutside) {
@@ -307,46 +393,16 @@ const PopupController = React.forwardRef((props, ref) => {
       childProp.ref = ctrlRef;
     }
     let ctrlProps = {
-      ...childProp, ...otherProps, disabled: disabled,
+      ...ctrl.props, ...childProp, ...otherProps,
     };
 
     return React.cloneElement(ctrl, ctrlProps);
   }, [disabled, otherProps]);
 
-  //add listeners for controller
-  const ctrlElem = useCallback(() => ownerRef && ownerRef.current ?
-      ownerRef.current : ctrlRef.current, [triggerBy]);
-  useEvent(EventListener.click,
-      useCallback(handleClick, [pcState, triggerBy]),
-      true, ctrlElem);
-  useEvent(EventListener.keyDown,
-      useCallback(handleKeyDown, [pcState, triggerBy]),
-      true, ctrlElem);
-  useEvent(EventListener.mouseEnter,
-      useCallback(
-          (e) => handleHover(e, Active.active, EventListener.mouseEnter),
-          [triggerBy]),
-      true, ctrlElem);
-  useEvent(EventListener.mouseLeave,
-      useCallback(
-          (e) => handleHover(e, Active.disactive, EventListener.mouseLeave),
-          [triggerBy]),
-      true, ctrlElem);
-  useEvent(EventListener.focus,
-      useCallback((e) => handleHover(e, Active.active, EventListener.focus),
-          [triggerBy]),
-      true, ctrlElem);
-  useEvent(EventListener.blur,
-      useCallback((e) => handleHover(e, Active.disactive, EventListener.blur),
-          [triggerBy]),
-      true, ctrlElem);
+  useComponentEvents(ownerRef, ctrlRef, triggerBy, handleClick, pcState,
+      handleKeyDown,
+      handleHover, bodyRef, shouldRender);
 
-  //add listeners for body
-  const bodyElem = useCallback(() => bodyRef.current, [triggerBy]);
-  useCombinedListeners(bodyElem,
-      (e) => handleHover(e, Active.active, 'bodyMouseEnter'),
-      (e) => handleHover(e, Active.disactive, 'bodyMouseLeave'), [triggerBy]);
-  console.log('===============');
   return <>
     {getPopupCtrl()}
     {realPopupBody}

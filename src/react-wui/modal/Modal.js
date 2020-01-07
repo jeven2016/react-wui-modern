@@ -1,8 +1,6 @@
 import React, {useEffect, useRef} from 'react';
-import * as ReactDOM from 'react-dom';
 import {ModalContext} from '../common/Context';
 import clsx from 'clsx';
-import useContainer from '../common/useContainer';
 import useEvent from '../common/UseEvent';
 import {EventListener} from '../common/Constants';
 import {isNil} from '../Utils';

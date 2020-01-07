@@ -131,3 +131,7 @@ export const EventListener = {
   keyDown: 'keydown',
   scroll: 'scroll',
 };
+
+export const ContainerId = {
+  popup: "wui-popup"
+};

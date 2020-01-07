@@ -16,6 +16,7 @@ const Popover = React.forwardRef((props, ref) => {
     body,
     position,
     children,
+    bodyOffset = '0.6rem',
     ...otherProps
   } = props;
 
@@ -48,6 +49,7 @@ const Popover = React.forwardRef((props, ref) => {
   return <PopupController
       ref={popRef}
       position={position}
+      bodyOffset={bodyOffset}
       handleChildren={updateChildren}
       setChildDisabled={false}
       // margin={5}

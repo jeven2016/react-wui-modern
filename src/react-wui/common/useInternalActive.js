@@ -1,39 +1,17 @@
 import React, {useState} from 'react';
-import {isNil} from '../Utils';
-import {Active} from './Constants';
 
 /**
  * Use internal active state
- * 1. the defaultActive is set and autoChange is true, the component
+ * 1. the defaultActive is set, the component
  *     will initially display defaultActive state but can internally change to other state
- * 2. the defaultActive is set but autoChange is always false,
- *     the active state can only be changed along with defaultActive (usually controlled by outside).
- * @param defaultActive
+ * 2. the active is set,
+ *     the active state cannot be changed automatically usually because it is controlled by outside.
  */
-const useInternalActive = (defaultActive, autoChange) => {
-  const [internalActive, setInternalActive] = useState(Active.na);
-  const isControlledByOther = () => !isNil(defaultActive);
-
-  const getCurrent = () => {
-    if (!isControlledByOther()) {
-      return Active.isNa(internalActive) ? defaultActive : internalActive;
-    }
-    if (autoChange && !Active.isNa(internalActive)) {
-      return internalActive;
-    }
-    return Active.convertBool(defaultActive);
-  };
-
-  const isActive = (value) => {
-    if (!isNil(value)) {
-      return Active.isActive(value);
-    }
-    return Active.isActive(getCurrent());
-  };
-
+const useInternalActive = (isExternalControl, defaultActive, active) => {
+  const initActive = isExternalControl ? active : defaultActive;
+  const [internalActive, setInternalActive] = useState(initActive);
   return {
-    isActive: isActive,
-    getActive: () => internalActive,
+    isActive: isExternalControl ? active : internalActive,
     setActive: setInternalActive,
   };
 };

@@ -7,6 +7,7 @@ const ActionType = {
   clickItem: 'clickItem',
   multipleClickItem: 'multipleClickItem',
   search: 'search',
+  removeItem: 'removeItem', //only for multi-select
 };
 
 const reducer = (state, action) => {
@@ -37,6 +38,13 @@ const reducer = (state, action) => {
 
     case ActionType.multipleClickItem:
       return multipleClickAction(state, action);
+
+    case ActionType.removeItem:
+      const paramData = action.data;
+      invoke(paramData.callback, paramData.value);
+      const filterItems = state.selectedItems.filter(
+          item => item.value !== paramData.value);
+      return {...state, selectedItems: filterItems};
 
     case ActionType.search:
       const searchData = action.data;

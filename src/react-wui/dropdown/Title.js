@@ -1,5 +1,6 @@
 import React from 'react';
 import useElement from '../common/useElement';
+import clsx from 'clsx';
 
 const DisabledStyle = {
   cursor: 'not-allowed',
@@ -12,8 +13,11 @@ const EnabledStyle = {
 };
 
 const Title = React.forwardRef((props, ref) => {
-  const {directRef, ...otherProps} = props;
-  return useElement({...otherProps}, ref, 'dropdown-title', null,
+  const {directRef, block, ...otherProps} = props;
+  const clsName = clsx('dropdown-title', {
+    block: block,
+  })
+  return useElement({...otherProps}, ref, clsName, null,
       props.disabled ? DisabledStyle : EnabledStyle);
 });
 

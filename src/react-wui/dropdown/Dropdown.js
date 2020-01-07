@@ -5,7 +5,6 @@ import {isNil} from '../Utils';
 import Button from '../button';
 import PopupController from '../common/PopupController';
 import Element from '../common/Element';
-import {preventEvent} from '../event';
 
 const Dropdown = React.forwardRef((props, ref) => {
   const dpRef = ref ? ref : useRef(null);

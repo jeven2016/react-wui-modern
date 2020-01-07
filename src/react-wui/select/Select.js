@@ -31,6 +31,7 @@ const Select = React.forwardRef((props, ref) => {
     searchDelay,
     noDataText = 'No Data',
     onChange,
+    preRemove, //only works for multi-select, before removing a item
     handleSearch,//a callback to decide what items will display
     onSearch,
     onOpen,
@@ -71,7 +72,6 @@ const Select = React.forwardRef((props, ref) => {
     if (multiple) {
       rect = multipleSelectRef.current.getBoundingClientRect();
     } else {
-      console.log('inputDomNode=', inputDomNode);
       rect = inputDomNode.getBoundingClientRect();
     }
     width = rect.width;
@@ -156,10 +156,23 @@ const Select = React.forwardRef((props, ref) => {
     }
   };
 
+  //only for multi-select
+  const removeItem = (val) => {
+    dispatch({
+      type: ActionType.removeItem,
+      data: {
+        value: val,
+        callback: (val) => {
+          preRemove && preRemove(val);
+        },
+      },
+    });
+  };
+
   const displayedItems = getSelectedMenuItem().map((val, index) => {
     return <Badge key={val + index} type="tag" color="gray">
       <span>{val}</span>
-      <span style={{marginLeft: '0.25rem'}}>×</span>
+      <span className="remove-icon" onClick={() => removeItem(val)}>×</span>
     </Badge>;
   });
 
@@ -178,31 +191,7 @@ const Select = React.forwardRef((props, ref) => {
     return state.selectedItems[0].text;
   };
   const displayText = getText();
-
   const inputStyle = searchable ? null : {cursor: 'pointer', ...style};
-
-  const handleOpen = () => {
-    // dispatch({type: ActionType.open, data: {callback: onOpen}});
-  };
-  const handleClose = () => {
-    // dispatch({type: ActionType.close, data: {callback: onClose}});
-  };
-
-  const clear = useCallback(() => {
-    if (!isNil(state.searchedValue) && finalItems.length === 0) {
-      //no valid value is selected, remove current invalid value
-      dispatch({type: ActionType.close, data: {callback: onClose}});
-    }
-  }, [state.searchedValue, finalItems]);
-
-  const handleMouseLeave = (e) => {
-    console.log('input leave');
-    clear();
-  };
-
-  const handleBlur = (e) => {
-    clear();
-  };
 
   const searchText = (e) => {
     dispatch({
@@ -325,18 +314,14 @@ const Select = React.forwardRef((props, ref) => {
                    selectable={true}
                    triggerBy={triggerBy}
                    margin={5}
-                   onOpen={handleOpen}
+                   onOpen={onOpen}
                    onDropdownAutoClose={canClickClose} //don't automately close the list while no data filtered
-                   onClose={handleClose}
+                   onClose={onClose}
                    bodyClassName={menuBodyCls}
                    popupStyle={popupStyle}
-                   ownerRef={inputRef}
+                   ownerRef={multiple ? multipleSelectRef : inputRef}
                    onSelect={handleItemClick}>
-    {
-      //todo
-    }
-    <Dropdown.Title block={block} onClick={() => {inputRef.current.focus();}}
-                    style={{tabIndex: '0'}}>
+    <Dropdown.Title block={block} onClick={() => {inputRef.current.focus();}}>
       {getInput()}
     </Dropdown.Title>
     {
