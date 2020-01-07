@@ -1,12 +1,9 @@
-import React, {useMemo, useState} from 'react';
+import React, {useMemo} from 'react';
 import {isNil} from '../Utils';
 import useInternalActive from '../common/useInternalActive';
 import clsx from 'clsx';
-import {Active} from '../common/Constants';
 import {Spring} from 'react-spring/renderprops';
-import {
-  toggleAnimation,
-} from '../animation/ToggleAnimation';
+import {toggleAnimation} from '../animation/ToggleAnimation';
 
 const ToggleType = {
   normal: 'normal',
